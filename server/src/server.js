@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import docsRouter from './routes/docs.js';
+import { fileURLToPath } from 'url';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -52,7 +53,11 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`\n✓ Server running on http://localhost:${PORT}`);
-  console.log(`✓ API available at http://localhost:${PORT}/api/docs`);
-});
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  app.listen(PORT, () => {
+    console.log(`\n✓ Server running on http://localhost:${PORT}`);
+    console.log(`✓ API available at http://localhost:${PORT}/api/docs`);
+  });
+}
+
+export default app;

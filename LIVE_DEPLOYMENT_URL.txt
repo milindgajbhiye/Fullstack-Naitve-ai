@@ -1,0 +1,28 @@
+LIVE DEPLOYMENT URL
+===================
+
+Local Development (Non-Public):
+- Frontend: http://localhost:3000
+- Backend: http://localhost:5000
+
+To run locally:
+1. cd server && npm install && npm run dev
+2. cd client && npm install && npm run dev
+
+Public Deployment (Ready to Deploy):
+- Frontend: Deploy to Vercel (https://vercel.com)
+- Backend: Deploy to Railway.app, Render.com, or Heroku
+
+Instructions for public deployment will be added here once deployed.
+
+Step-by-step deployment guide:
+1. Create free accounts on Vercel and Railway.app
+2. Connect GitHub repo to both platforms
+3. Set backend URL as environment variable in frontend
+4. Deploy both services
+5. Test end-to-end at public URLs
+6. Share links below
+
+To be updated:
+- Frontend URL: [will add after Vercel deployment]
+- Backend URL: [will add after Railway deployment]
