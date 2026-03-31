@@ -3,6 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Sidebar from './components/Sidebar';
 import Editor from './components/Editor';
 import Layout from './components/Layout';
+import CommandPalette from './components/ui/CommandPalette';
+import AIAssistantPanel from './components/ui/AIAssistantPanel';
 
 function App() {
   const [currentUser, setCurrentUser] = useState(localStorage.getItem('currentUser') || 'user1@gmail.com');
@@ -10,6 +12,7 @@ function App() {
   const [currentDoc, setCurrentDoc] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   const ownedCount = documents.filter((doc) => doc.isOwner).length;
   const sharedCount = documents.filter((doc) => !doc.isOwner).length;
@@ -20,6 +23,18 @@ function App() {
       loadDocuments();
     }
   }, [currentUser]);
+
+  useEffect(() => {
+    const handleCommand = (event) => {
+      const isShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k';
+      if (!isShortcut) return;
+      event.preventDefault();
+      setPaletteOpen((prev) => !prev);
+    };
+
+    window.addEventListener('keydown', handleCommand);
+    return () => window.removeEventListener('keydown', handleCommand);
+  }, []);
 
   const loadDocuments = async () => {
     try {
@@ -148,71 +163,99 @@ function App() {
   };
 
   return (
-    <Layout
-      sidebar={(
-        <Sidebar
-          documents={documents}
-          currentDoc={currentDoc}
-          currentUser={currentUser}
-          onSelectDocument={handleSelectDocument}
-          onCreateDocument={handleCreateDocument}
-          onImportDocument={handleImportDocument}
-          onSwitchUser={handleSwitchUser}
-          loading={loading}
-        />
-      )}
-      ownedCount={ownedCount}
-      sharedCount={sharedCount}
-      error={error}
-    >
+    <>
       <AnimatePresence mode="wait">
-        {currentDoc ? (
-          <motion.div
-            key={currentDoc.id}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.24, ease: 'easeOut' }}
-            className="h-full"
-          >
-            <Editor
-              doc={currentDoc}
-              user={currentUser}
-              onUpdate={handleUpdateDocument}
-              onShare={handleShareDocument}
-              onDelete={handleDeleteDocument}
-            />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="empty"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.24, ease: 'easeOut' }}
-            className="flex h-full items-center justify-center rounded-2xl border border-white/10 bg-slate-900/60 p-10 backdrop-blur"
-          >
-            {loading ? (
-              <div className="w-full max-w-3xl space-y-4">
-                <div className="h-10 w-2/3 animate-pulse rounded-xl bg-slate-700/70" />
-                <div className="h-64 animate-pulse rounded-xl bg-slate-800/80" />
-                <div className="h-14 animate-pulse rounded-xl bg-slate-800/70" />
-              </div>
-            ) : (
-              <div className="text-center">
-                <div className="mx-auto mb-4 h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 p-3 text-blue-300">
-                  <svg viewBox="0 0 24 24" fill="none" className="h-full w-full" stroke="currentColor" strokeWidth="1.8">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8M8 11h8M8 15h5M7 3h10a2 2 0 0 1 2 2v14l-3-2-2 2-2-2-2 2-3-2V5a2 2 0 0 1 2-2Z" />
-                  </svg>
-                </div>
-                <h2 className="mb-2 text-3xl font-semibold tracking-tight text-slate-100">Start by creating a new document</h2>
-                <p className="text-sm text-slate-400">Use New Document or upload a .txt file to begin writing.</p>
-              </div>
+        <motion.div
+          key={currentUser}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, filter: 'blur(4px)' }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+          className="h-full"
+        >
+          <Layout
+            sidebar={(
+              <Sidebar
+                documents={documents}
+                currentDoc={currentDoc}
+                currentUser={currentUser}
+                onSelectDocument={handleSelectDocument}
+                onCreateDocument={handleCreateDocument}
+                onImportDocument={handleImportDocument}
+                onSwitchUser={handleSwitchUser}
+                loading={loading}
+              />
             )}
-          </motion.div>
-        )}
+            ownedCount={ownedCount}
+            sharedCount={sharedCount}
+            error={error}
+            onOpenPalette={() => setPaletteOpen(true)}
+          >
+            <div className="flex h-full gap-4">
+              <div className="min-w-0 flex-1">
+                <AnimatePresence mode="wait">
+                  {currentDoc ? (
+                    <motion.div
+                      key={currentDoc.id}
+                      initial={{ opacity: 0, x: 10, filter: 'blur(6px)' }}
+                      animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                      exit={{ opacity: 0, x: -10, filter: 'blur(6px)' }}
+                      transition={{ duration: 0.3, ease: 'easeOut' }}
+                      className="h-full"
+                    >
+                      <Editor
+                        doc={currentDoc}
+                        user={currentUser}
+                        onUpdate={handleUpdateDocument}
+                        onShare={handleShareDocument}
+                        onDelete={handleDeleteDocument}
+                      />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="empty"
+                      initial={{ opacity: 0, y: 12, filter: 'blur(6px)' }}
+                      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                      exit={{ opacity: 0, filter: 'blur(5px)' }}
+                      transition={{ duration: 0.28, ease: 'easeOut' }}
+                      className="flex h-full items-center justify-center rounded-2xl border border-white/10 bg-slate-900/60 p-10 backdrop-blur"
+                    >
+                      {loading ? (
+                        <div className="w-full max-w-3xl space-y-4">
+                          <div className="skeleton-shimmer h-10 w-2/3 rounded-xl bg-slate-700/70" />
+                          <div className="skeleton-shimmer h-64 rounded-xl bg-slate-800/80" />
+                          <div className="skeleton-shimmer h-14 rounded-xl bg-slate-800/70" />
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <div className="mx-auto mb-4 h-14 w-14 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 p-3 text-blue-300">
+                            <svg viewBox="0 0 24 24" fill="none" className="h-full w-full" stroke="currentColor" strokeWidth="1.8">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8M8 11h8M8 15h5M7 3h10a2 2 0 0 1 2 2v14l-3-2-2 2-2-2-2 2-3-2V5a2 2 0 0 1 2-2Z" />
+                            </svg>
+                          </div>
+                          <h2 className="mb-2 text-3xl font-semibold tracking-tight text-slate-100">Start by creating a new document</h2>
+                          <p className="text-sm text-slate-400">Press Ctrl+K to open command palette and jump instantly.</p>
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <AIAssistantPanel />
+            </div>
+          </Layout>
+        </motion.div>
       </AnimatePresence>
-    </Layout>
+
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        documents={documents}
+        onSelectDocument={handleSelectDocument}
+        onCreateDocument={handleCreateDocument}
+      />
+    </>
   );
 }
 

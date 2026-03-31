@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactQuill from 'react-quill';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Share2, Trash2 } from 'lucide-react';
+import MotionButton from './ui/MotionButton';
 import 'react-quill/dist/quill.snow.css';
 
 function Editor({ doc, user, onUpdate, onShare, onDelete }) {
@@ -10,6 +11,7 @@ function Editor({ doc, user, onUpdate, onShare, onDelete }) {
   const [shareEmail, setShareEmail] = useState('');
   const [saveStatus, setSaveStatus] = useState('');
   const [shareNotice, setShareNotice] = useState('');
+  const [titleFocused, setTitleFocused] = useState(false);
   const saveTimeoutRef = useRef(null);
   const isOwner = doc.owner === user;
 
@@ -101,16 +103,29 @@ function Editor({ doc, user, onUpdate, onShare, onDelete }) {
         <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Owner {doc.owner}</p>
       </div>
 
-      <div className="min-h-0 flex-1 rounded-2xl border border-white/10 bg-slate-800/70 p-5 shadow-2xl shadow-slate-950/40 backdrop-blur">
-        <input
+      <motion.div
+        whileHover={{ y: -4, boxShadow: '0 24px 46px rgba(2,6,23,0.45)' }}
+        transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+        className="min-h-0 flex-1 rounded-2xl border border-white/10 bg-slate-800/70 p-5 shadow-2xl shadow-slate-950/40 backdrop-blur"
+      >
+        <motion.input
+          animate={{ scale: titleFocused ? 1.01 : 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 20 }}
           type="text"
           value={title}
           onChange={handleTitleChange}
+          onFocus={() => setTitleFocused(true)}
+          onBlur={() => setTitleFocused(false)}
           placeholder="Untitled Document"
           className="mb-4 w-full rounded-xl border border-transparent bg-transparent px-2 py-1 text-3xl font-bold tracking-tight text-slate-100 outline-none transition focus:border-blue-400/50 focus:ring-2 focus:ring-blue-500/30"
         />
 
-        <div className="quill-shell mb-4 overflow-hidden rounded-xl border border-slate-700/80 bg-slate-50 text-slate-900">
+        <motion.div
+          initial={{ opacity: 0.75, filter: 'blur(2px)' }}
+          animate={{ opacity: 1, filter: 'blur(0px)' }}
+          transition={{ duration: 0.28 }}
+          className="quill-shell mb-4 overflow-hidden rounded-xl border border-slate-700/80 bg-slate-50 text-slate-900"
+        >
           <ReactQuill
             value={content}
             onChange={handleContentChange}
@@ -118,7 +133,7 @@ function Editor({ doc, user, onUpdate, onShare, onDelete }) {
             placeholder="Start writing your document..."
             className="h-[440px]"
           />
-        </div>
+        </motion.div>
 
         <div className="rounded-xl border border-white/10 bg-slate-900/70 p-4">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
@@ -137,27 +152,21 @@ function Editor({ doc, user, onUpdate, onShare, onDelete }) {
                 className="rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none transition focus:ring-2 focus:ring-blue-500/40"
               />
 
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.97 }}
-                transition={{ duration: 0.2 }}
+              <MotionButton
                 onClick={handleShare}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-500/30 hover:bg-blue-400"
               >
                 <Share2 className="h-4 w-4" />
                 Share
-              </motion.button>
+              </MotionButton>
 
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.97 }}
-                transition={{ duration: 0.2 }}
+              <MotionButton
                 onClick={onDelete}
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-400/30 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-200 hover:bg-rose-500/20"
               >
                 <Trash2 className="h-4 w-4" />
                 Delete
-              </motion.button>
+              </MotionButton>
             </div>
           ) : (
             <p className="text-sm text-slate-400">Shared by {doc.owner}</p>
@@ -187,7 +196,7 @@ function Editor({ doc, user, onUpdate, onShare, onDelete }) {
             )}
           </AnimatePresence>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

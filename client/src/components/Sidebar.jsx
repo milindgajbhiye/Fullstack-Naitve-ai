@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useMotionValue, useSpring } from 'framer-motion';
+import MotionButton from './ui/MotionButton';
 
 function Sidebar({ documents, currentDoc, currentUser, onSelectDocument, onCreateDocument, onImportDocument, onSwitchUser, loading }) {
   const [newTitle, setNewTitle] = useState('');
   const [showNewDocForm, setShowNewDocForm] = useState(false);
+  const panX = useMotionValue(0);
+  const panY = useMotionValue(0);
+  const smoothX = useSpring(panX, { stiffness: 200, damping: 20 });
+  const smoothY = useSpring(panY, { stiffness: 200, damping: 20 });
 
   const formatDate = (value) => {
     if (!value) return '';
@@ -38,8 +43,26 @@ function Sidebar({ documents, currentDoc, currentUser, onSelectDocument, onCreat
     e.target.value = '';
   };
 
+  const handlePanelMove = (event) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const relX = (event.clientX - rect.left - rect.width / 2) / rect.width;
+    const relY = (event.clientY - rect.top - rect.height / 2) / rect.height;
+    panX.set(relX * 8);
+    panY.set(relY * 8);
+  };
+
+  const resetPanelMove = () => {
+    panX.set(0);
+    panY.set(0);
+  };
+
   return (
-    <div className="flex h-full flex-col rounded-2xl border border-white/10 bg-slate-900/80 shadow-2xl shadow-slate-950/50 backdrop-blur-xl">
+    <motion.div
+      style={{ x: smoothX, y: smoothY }}
+      onMouseMove={handlePanelMove}
+      onMouseLeave={resetPanelMove}
+      className="flex h-full flex-col rounded-2xl border border-white/10 bg-slate-900/80 shadow-2xl shadow-slate-950/50 backdrop-blur-xl"
+    >
       <div className="border-b border-white/10 p-4">
         <div className="mb-4 flex items-center gap-3">
           <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-blue-500/30 to-purple-500/30 text-sm font-semibold text-blue-100">
@@ -51,15 +74,12 @@ function Sidebar({ documents, currentDoc, currentUser, onSelectDocument, onCreat
           </div>
         </div>
 
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.97 }}
-          transition={{ duration: 0.2 }}
+        <MotionButton
           className="mb-3 w-full rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/25"
           onClick={() => setShowNewDocForm(!showNewDocForm)}
         >
           + New Document
-        </motion.button>
+        </MotionButton>
 
         <label className="mb-2 block cursor-pointer rounded-xl border border-white/10 bg-slate-800/80 px-3 py-2 text-center text-xs font-medium text-slate-200 transition hover:bg-slate-700/80">
           Upload .txt
@@ -93,10 +113,10 @@ function Sidebar({ documents, currentDoc, currentUser, onSelectDocument, onCreat
             className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-sm text-slate-100 outline-none ring-blue-500/50 transition focus:ring-2"
           />
           <div className="grid grid-cols-2 gap-2">
-            <button onClick={handleCreateNew} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-900 transition hover:bg-white">
+            <MotionButton onClick={handleCreateNew} className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-900 transition hover:bg-white">
               Create
-            </button>
-            <button
+            </MotionButton>
+            <MotionButton
               onClick={() => {
                 setShowNewDocForm(false);
                 setNewTitle('');
@@ -104,7 +124,7 @@ function Sidebar({ documents, currentDoc, currentUser, onSelectDocument, onCreat
               className="rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800"
             >
               Cancel
-            </button>
+            </MotionButton>
           </div>
         </motion.div>
       )}
@@ -113,7 +133,7 @@ function Sidebar({ documents, currentDoc, currentUser, onSelectDocument, onCreat
         {loading ? (
           <div className="space-y-2">
             {[1, 2, 3, 4, 5].map((item) => (
-              <div key={item} className="h-14 animate-pulse rounded-xl bg-slate-800/80" />
+              <div key={item} className="skeleton-shimmer h-14 rounded-xl bg-slate-800/80" />
             ))}
           </div>
         ) : (
@@ -127,18 +147,19 @@ function Sidebar({ documents, currentDoc, currentUser, onSelectDocument, onCreat
                     return (
                       <li key={doc.id}>
                         <motion.button
-                          whileHover={{ scale: 1.02, y: -1 }}
-                          whileTap={{ scale: 0.98 }}
-                          transition={{ duration: 0.2 }}
+                          whileHover={{ x: 6, y: -2 }}
+                          whileTap={{ scale: 0.96 }}
+                          transition={{ type: 'spring', stiffness: 200, damping: 20 }}
                           onClick={() => onSelectDocument(doc)}
-                          className={`w-full rounded-xl border px-3 py-2 text-left transition ${
+                          className={`relative w-full rounded-xl border px-3 py-2 text-left transition ${
                             isActive
-                              ? 'border-blue-400/50 bg-blue-500/20 shadow-lg shadow-blue-500/15'
+                              ? 'border-blue-400/50 shadow-lg shadow-blue-500/15'
                               : 'border-white/10 bg-slate-800/70 hover:bg-slate-700/80'
                           }`}
                         >
-                          <p className="truncate text-sm font-medium text-slate-100">{doc.title}</p>
-                          <p className="mt-1 text-xs text-slate-400">Updated {formatDate(doc.updatedAt)}</p>
+                          {isActive && <motion.span layoutId="active-doc-indicator" className="absolute inset-0 rounded-xl bg-blue-500/20" transition={{ type: 'spring', stiffness: 200, damping: 20 }} />}
+                          <p className="relative z-10 truncate text-sm font-medium text-slate-100">{doc.title}</p>
+                          <p className="relative z-10 mt-1 text-xs text-slate-400">Updated {formatDate(doc.updatedAt)}</p>
                         </motion.button>
                       </li>
                     );
@@ -156,18 +177,19 @@ function Sidebar({ documents, currentDoc, currentUser, onSelectDocument, onCreat
                     return (
                       <li key={doc.id}>
                         <motion.button
-                          whileHover={{ scale: 1.02, y: -1 }}
-                          whileTap={{ scale: 0.98 }}
-                          transition={{ duration: 0.2 }}
+                          whileHover={{ x: 6, y: -2 }}
+                          whileTap={{ scale: 0.96 }}
+                          transition={{ type: 'spring', stiffness: 200, damping: 20 }}
                           onClick={() => onSelectDocument(doc)}
-                          className={`w-full rounded-xl border px-3 py-2 text-left transition ${
+                          className={`relative w-full rounded-xl border px-3 py-2 text-left transition ${
                             isActive
-                              ? 'border-purple-400/50 bg-purple-500/20 shadow-lg shadow-purple-500/15'
+                              ? 'border-purple-400/50 shadow-lg shadow-purple-500/15'
                               : 'border-white/10 bg-slate-800/70 hover:bg-slate-700/80'
                           }`}
                         >
-                          <p className="truncate text-sm font-medium text-slate-100">{doc.title}</p>
-                          <p className="mt-1 text-xs text-slate-400">by {doc.owner.split('@')[0]}</p>
+                          {isActive && <motion.span layoutId="active-doc-indicator" className="absolute inset-0 rounded-xl bg-purple-500/20" transition={{ type: 'spring', stiffness: 200, damping: 20 }} />}
+                          <p className="relative z-10 truncate text-sm font-medium text-slate-100">{doc.title}</p>
+                          <p className="relative z-10 mt-1 text-xs text-slate-400">by {doc.owner.split('@')[0]}</p>
                         </motion.button>
                       </li>
                     );
@@ -180,7 +202,7 @@ function Sidebar({ documents, currentDoc, currentUser, onSelectDocument, onCreat
           </>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
